@@ -64,16 +64,17 @@ pub mod token_delegate {
         Ok(())
     }
 
+    // Perform a delegated transfer and update the allowance
     pub fn delegate_transfer(ctx: Context<DelegateTransfer>,
         inp_amount: u64,
     ) -> anchor_lang::Result<()> {
         //msg!("Transfer amount: {}", inp_amount.to_string());
         let allowance = &mut ctx.accounts.allowance;
-        verify_matching_accounts(&allowance.delegate, ctx.accounts.delegate.to_account_info().key,
-            Some(String::from("Invalid delegate"))
-        )?;
         verify_matching_accounts(&allowance.token_account, ctx.accounts.from.to_account_info().key,
             Some(String::from("Invalid token account"))
+        )?;
+        verify_matching_accounts(&allowance.delegate, ctx.accounts.delegate.to_account_info().key,
+            Some(String::from("Invalid delegate"))
         )?;
         if inp_amount > 0 {
             //msg!("Begin: {}", ald.amount.to_string());
@@ -107,6 +108,33 @@ pub mod token_delegate {
         Ok(())
     }
 
+    // Update the delegate allowance amount
+    pub fn delegate_update_allowance(ctx: Context<DelegateUpdateAmount>,
+        inp_amount: u64,
+    ) -> anchor_lang::Result<()> {
+        verify_matching_accounts(&ctx.accounts.allowance.owner, ctx.accounts.owner.to_account_info().key,
+            Some(String::from("Invalid current allowance owner"))
+        )?;
+        ctx.accounts.allowance.amount = inp_amount;
+        Ok(())
+    }
+
+    // Update the delegate owner in case the SPL token owner is changed separately
+    pub fn delegate_update_owner(ctx: Context<DelegateUpdateOwner>) -> anchor_lang::Result<()> {
+        verify_matching_accounts(&ctx.accounts.allowance.token_account, ctx.accounts.token_account.to_account_info().key,
+            Some(String::from("Invalid token account"))
+        )?;
+        verify_matching_accounts(&ctx.accounts.allowance.owner, ctx.accounts.current_owner.to_account_info().key,
+            Some(String::from("Invalid current allowance owner"))
+        )?;
+        verify_matching_accounts(&ctx.accounts.token_account.owner, ctx.accounts.new_owner.to_account_info().key,
+            Some(String::from("Invalid new allowance owner"))
+        )?;
+        ctx.accounts.allowance.owner = *ctx.accounts.new_owner.to_account_info().key;
+        Ok(())
+    }
+
+    // Close the delegate allowance and recover the storage fee
     pub fn delegate_close(ctx: Context<DelegateClose>) -> anchor_lang::Result<()> {
         verify_matching_accounts(&ctx.accounts.allowance.owner, ctx.accounts.owner.to_account_info().key,
             Some(String::from("Invalid allowance owner"))
@@ -160,6 +188,22 @@ pub struct DelegateTransfer<'info> {
 }
 
 #[derive(Accounts)]
+pub struct DelegateUpdateAmount<'info> {
+    #[account(mut)]
+    pub allowance: Account<'info, DelegateAllowance>,
+    pub owner: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct DelegateUpdateOwner<'info> {
+    #[account(mut)]
+    pub allowance: Account<'info, DelegateAllowance>,
+    pub token_account: Account<'info, TokenAccount>,
+    pub current_owner: Signer<'info>,
+    pub new_owner: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
 pub struct DelegateClose<'info> {
     #[account(mut, close = fee_recipient)]
     pub allowance: Account<'info, DelegateAllowance>,
@@ -171,7 +215,7 @@ pub struct DelegateClose<'info> {
 #[account]
 #[derive(Default)]
 pub struct DelegateAllowance {
-    pub owner: Pubkey,                  // The owner of the allowance (should be the owner/authority of the token account)
+    pub owner: Pubkey,                  // The owner of the allowance (must be same as the owner of the token account)
     pub token_account: Pubkey,          // The token account for the allowance
     pub delegate: Pubkey,               // The delegate granted an allowance of tokens to transfer (typically the root PDA of another program)
     pub amount: u64,                    // The amount of tokens for the allowance (same decimals as underlying token)
