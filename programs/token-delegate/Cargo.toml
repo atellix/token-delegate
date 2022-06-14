@@ -1,0 +1,20 @@
+[package]
+name = "token-delegate"
+version = "1.0.0"
+description = "Protocol to create multiple token delegates for SPL token accounts"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "token_delegate"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = ["no-log-ix-name"]
+
+[dependencies]
+anchor-lang = "0.24.2"
+anchor-spl = "0.24.2"
