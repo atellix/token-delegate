@@ -146,12 +146,12 @@ pub mod token_delegate {
 #[derive(Accounts)]
 pub struct DelegateLink<'info> {
     pub owner: Signer<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(seeds = [program_id.as_ref()], bump)]
     pub delegate_root: UncheckedAccount<'info>,
     #[account(mut)]
     pub token_account: Account<'info, TokenAccount>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(address = token::ID)]
     pub token_program: AccountInfo<'info>,
 }
@@ -163,17 +163,17 @@ pub struct DelegateApprove<'info> {
     #[account(mut)]
     pub allowance_payer: Signer<'info>,
     pub owner: Signer<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     pub delegate: UncheckedAccount<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(seeds = [program_id.as_ref()], bump)]
     pub delegate_root: UncheckedAccount<'info>,
     #[account(mut)]
     pub token_account: Account<'info, TokenAccount>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(address = token::ID)]
     pub token_program: UncheckedAccount<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(address = system_program::ID)]
     pub system_program: UncheckedAccount<'info>,
 }
@@ -183,14 +183,14 @@ pub struct DelegateTransfer<'info> {
     #[account(mut)]
     pub allowance: Account<'info, DelegateAllowance>,
     pub delegate: Signer<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(seeds = [program_id.as_ref()], bump)]
     pub delegate_root: UncheckedAccount<'info>,
     #[account(mut)]
     pub from: Account<'info, TokenAccount>,
     #[account(mut)]
     pub to: Account<'info, TokenAccount>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(address = token::ID)]
     pub token_program: UncheckedAccount<'info>,
 }
@@ -208,7 +208,7 @@ pub struct DelegateUpdateOwner<'info> {
     pub allowance: Account<'info, DelegateAllowance>,
     pub token_account: Account<'info, TokenAccount>,
     pub current_owner: Signer<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     pub new_owner: UncheckedAccount<'info>,
 }
 
@@ -217,7 +217,7 @@ pub struct DelegateClose<'info> {
     #[account(mut, close = fee_recipient)]
     pub allowance: Account<'info, DelegateAllowance>,
     pub owner: Signer<'info>,
-    // CHECK: ok
+    /// CHECK: ok
     #[account(mut)]
     pub fee_recipient: UncheckedAccount<'info>,
 }
