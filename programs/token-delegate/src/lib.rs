@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, TokenAccount, Transfer, Approve };
 use solana_program::{ system_program };
 
-declare_id!("TDLGbdMdskdC2DPz2eSeW3tuxtqRchjt5JMsUrdGTGm");
+declare_id!("TKDLLzzmBD7Rwbz6PS4XDFDr5w4ApSBRNC4wninsX7M");
 
 fn verify_matching_accounts(left: &Pubkey, right: &Pubkey, error_msg: Option<String>) -> anchor_lang::Result<()> {
     if *left != *right {
