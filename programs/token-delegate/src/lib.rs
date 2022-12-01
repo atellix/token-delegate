@@ -76,6 +76,9 @@ pub mod token_delegate {
         verify_matching_accounts(&allowance.delegate, ctx.accounts.delegate.to_account_info().key,
             Some(String::from("Invalid delegate"))
         )?;
+        verify_matching_accounts(&allowance.owner, &ctx.accounts.from.owner,
+            Some(String::from("Allowance owner does not match token account"))
+        )?;
         if inp_amount > 0 {
             //msg!("Begin: {}", ald.amount.to_string());
             let diff = allowance.amount.checked_sub(inp_amount);
@@ -158,7 +161,7 @@ pub struct DelegateLink<'info> {
 
 #[derive(Accounts)]
 pub struct DelegateApprove<'info> {
-    #[account(init_if_needed, seeds = [token_account.key().as_ref(), delegate.key().as_ref()], bump, payer = allowance_payer, space = 112)]
+    #[account(init_if_needed, seeds = [token_account.key().as_ref(), owner.key().as_ref(), delegate.key().as_ref()], bump, payer = allowance_payer, space = 112)]
     pub allowance: Account<'info, DelegateAllowance>,
     #[account(mut)]
     pub allowance_payer: Signer<'info>,
