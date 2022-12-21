@@ -1,8 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, TokenAccount, Transfer, Approve, Token };
 
-//declare_id!("TKDLLzzmBD7Rwbz6PS4XDFDr5w4ApSBRNC4wninsX7M");
-declare_id!("EcQRE1LAGxV9qqqRZFP4VF38P33TarRiPCsvLVHV353Y");
+declare_id!("TKDLLzzmBD7Rwbz6PS4XDFDr5w4ApSBRNC4wninsX7M");
 
 #[program]
 pub mod token_delegate {
