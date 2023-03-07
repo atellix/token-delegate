@@ -3,6 +3,25 @@ Protocol to create multiple token delegates for SPL token accounts
 
 A protocol to share one delegate with multiple programs.
 
+## Input accounts
+```javascript
+
+async function programAddress(inputs, programPK = tokenAgentPK) {
+    const addr = await PublicKey.findProgramAddress(inputs, programPK)
+    const res = { 'pubkey': await addr[0].toString(), 'nonce': addr[1] }
+    return res
+}
+
+const delegateProgram = new PublicKey('TDLGbdMdskdC2DPz2eSeW3tuxtqRchjt5JMsUrdGTGm')
+
+const delegateRoot = await programAddress([delegateProgram.toBuffer()], delegateProgram)
+const allowance = await programAddress([tokenAccount.toBuffer(), provider.wallet.publicKey.toBuffer(), rootKeyPK.toBuffer()], delegateProgram)
+
+const delegateRootPK = new PublicKey(delegateRoot.pubkey)
+const allowancePK = new PublicKey(allowance.pubkey)
+
+```
+
 ## Import Statement
 ```rust
 use token_delegate::{ self, cpi::accounts::{ DelegateApprove, DelegateTransfer } };
