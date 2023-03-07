@@ -1,14 +1,18 @@
 [features]
 seeds = false
 [programs.localnet]
-token_delegate = "TKDLLzzmBD7Rwbz6PS4XDFDr5w4ApSBRNC4wninsX7M"
+#token_delegate = "TKDLLzzmBD7Rwbz6PS4XDFDr5w4ApSBRNC4wninsX7M"
+token_delegate = "TDLGbdMdskdC2DPz2eSeW3tuxtqRchjt5JMsUrdGTGm"
 
-[registry]
-url = "https://anchor.projectserum.com"
+#[registry]
+#url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "mainnet"
-wallet = "/tmp/ramdisk/export/key-deploy-1.json"
+#cluster = "mainnet"
+#wallet = "/tmp/ramdisk/export/key-deploy-1.json"
+
+cluster = "devnet"
+wallet = "/Users/mfrager/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
