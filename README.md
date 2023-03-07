@@ -12,7 +12,7 @@ async function programAddress(inputs, programPK = tokenAgentPK) {
     return res
 }
 
-const delegateProgram = new PublicKey('TDLGbdMdskdC2DPz2eSeW3tuxtqRchjt5JMsUrdGTGm')
+const delegateProgram = new PublicKey('... FILL IN ...')
 
 const delegateRoot = await programAddress([delegateProgram.toBuffer()], delegateProgram)
 const allowance = await programAddress([tokenAccount.toBuffer(), provider.wallet.publicKey.toBuffer(), rootKeyPK.toBuffer()], delegateProgram)
