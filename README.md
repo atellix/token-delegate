@@ -15,7 +15,7 @@ let cpi_accounts = DelegateApprove {
     allowance: ctx.accounts.allowance.to_account_info(),            // PDA of Token Delegate Program: (token_account, owner, delegate)
     allowance_payer: ctx.accounts.user_key.to_account_info(),       // Payer to open the allowance account
     owner: ctx.accounts.this_user.to_account_info(),                // The owner of the main token account
-    delegate: ctx.accounts.this_program.to_account_info(),          // The delegate account (probably a PDA for another program)
+    delegate: ctx.accounts.this_program_pda.to_account_info(),      // The delegate account (probably a PDA for another program)
     delegate_root: ctx.accounts.delegate_root.to_account_info(),    // The PDA of the Token Delegate Program (the "delegate" for SPL token accounts)
     token_account: ctx.accounts.token_account.clone(),              // The SPL token account to link
     token_program: ctx.accounts.token_program.to_account_info(),    // SPL Token program
@@ -35,7 +35,7 @@ let root_pda_signer = &[&root_pda_seeds[..]];
 
 let cpi_accounts = DelegateTransfer {
     allowance: ctx.accounts.allowance.to_account_info(),            // PDA of Token Delegate Program: (token_account, owner, delegate)
-    delegate: ctx.accounts.root_key.to_account_info(),              // The delegate account (probably a PDA for another program)
+    delegate: ctx.accounts.this_program_pda.to_account_info(),      // The delegate account (probably a PDA for another program)
     delegate_root: ctx.accounts.delegate_root.to_account_info(),    // The PDA of the Token Delegate Program
     from: ctx.accounts.token_account.clone(),                       // The SPL token account that was delegated
     to: ctx.accounts.token_account_destination.clone(),             // The destination SPL token account for the transfer
