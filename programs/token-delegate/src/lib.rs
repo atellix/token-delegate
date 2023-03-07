@@ -1,20 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{ self, TokenAccount, Transfer, Approve };
-use solana_program::{ system_program };
+use anchor_spl::token::{ self, TokenAccount, Transfer, Approve, Token };
 
 declare_id!("TDLGbdMdskdC2DPz2eSeW3tuxtqRchjt5JMsUrdGTGm");
-
-fn verify_matching_accounts(left: &Pubkey, right: &Pubkey, error_msg: Option<String>) -> anchor_lang::Result<()> {
-    if *left != *right {
-        if error_msg.is_some() {
-            msg!(error_msg.unwrap().as_str());
-            msg!("Expected: {}", left.to_string());
-            msg!("Received: {}", right.to_string());
-        }
-        return Err(ErrorCode::InvalidAccount.into());
-    }
-    Ok(())
-}
 
 #[program]
 pub mod token_delegate {
@@ -31,8 +18,7 @@ pub mod token_delegate {
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::approve(cpi_ctx, inp_amount)?;
-        Ok(())
+        token::approve(cpi_ctx, inp_amount)
     }
 
     // Approve a sub-delegate for later SPL token transfers, and optionally link SPL token account to the token-delegate program
@@ -53,9 +39,7 @@ pub mod token_delegate {
             token::approve(cpi_ctx, inp_link_amount)?;
         }
         // Ensure signer is token account owner
-        verify_matching_accounts(&ctx.accounts.token_account.owner, ctx.accounts.owner.to_account_info().key,
-            Some(String::from("Invalid token owner"))
-        )?;
+        require_keys_eq!(ctx.accounts.token_account.owner, ctx.accounts.owner.key(), ErrorCode::InvalidTokenAccountOwner);
         let allowance = &mut ctx.accounts.allowance;
         allowance.owner = *ctx.accounts.owner.to_account_info().key;
         allowance.token_account = *ctx.accounts.token_account.to_account_info().key;
@@ -70,15 +54,7 @@ pub mod token_delegate {
     ) -> anchor_lang::Result<()> {
         //msg!("Transfer amount: {}", inp_amount.to_string());
         let allowance = &mut ctx.accounts.allowance;
-        verify_matching_accounts(&allowance.token_account, ctx.accounts.from.to_account_info().key,
-            Some(String::from("Invalid token account"))
-        )?;
-        verify_matching_accounts(&allowance.delegate, ctx.accounts.delegate.to_account_info().key,
-            Some(String::from("Invalid delegate"))
-        )?;
-        verify_matching_accounts(&allowance.owner, &ctx.accounts.from.owner,
-            Some(String::from("Allowance owner does not match token account"))
-        )?;
+        require_keys_eq!(allowance.token_account, ctx.accounts.from.key(), ErrorCode::InvalidTokenAccount);
         if inp_amount > 0 {
             //msg!("Begin: {}", ald.amount.to_string());
             let diff = allowance.amount.checked_sub(inp_amount);
@@ -112,21 +88,15 @@ pub mod token_delegate {
     }
 
     // Update the delegate allowance amount
-    pub fn delegate_update_allowance(ctx: Context<DelegateUpdateAmount>,
+    pub fn delegate_update_amount(ctx: Context<DelegateUpdateAmount>,
         inp_amount: u64,
     ) -> anchor_lang::Result<()> {
-        verify_matching_accounts(&ctx.accounts.allowance.owner, ctx.accounts.owner.to_account_info().key,
-            Some(String::from("Invalid current allowance owner"))
-        )?;
         ctx.accounts.allowance.amount = inp_amount;
         Ok(())
     }
 
     // Close the delegate allowance and recover the storage fee
-    pub fn delegate_close(ctx: Context<DelegateClose>) -> anchor_lang::Result<()> {
-        verify_matching_accounts(&ctx.accounts.allowance.owner, ctx.accounts.owner.to_account_info().key,
-            Some(String::from("Invalid allowance owner"))
-        )?;
+    pub fn delegate_close(_ctx: Context<DelegateClose>) -> anchor_lang::Result<()> {
         Ok(())
     }
 }
@@ -139,9 +109,7 @@ pub struct DelegateLink<'info> {
     pub delegate_root: UncheckedAccount<'info>,
     #[account(mut)]
     pub token_account: Account<'info, TokenAccount>,
-    /// CHECK: ok
-    #[account(address = token::ID)]
-    pub token_program: AccountInfo<'info>,
+    pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
@@ -158,17 +126,13 @@ pub struct DelegateApprove<'info> {
     pub delegate_root: UncheckedAccount<'info>,
     #[account(mut)]
     pub token_account: Account<'info, TokenAccount>,
-    /// CHECK: ok
-    #[account(address = token::ID)]
-    pub token_program: UncheckedAccount<'info>,
-    /// CHECK: ok
-    #[account(address = system_program::ID)]
-    pub system_program: UncheckedAccount<'info>,
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct DelegateTransfer<'info> {
-    #[account(mut)]
+    #[account(mut, has_one = delegate)]
     pub allowance: Account<'info, DelegateAllowance>,
     pub delegate: Signer<'info>,
     /// CHECK: ok
@@ -178,21 +142,19 @@ pub struct DelegateTransfer<'info> {
     pub from: Account<'info, TokenAccount>,
     #[account(mut)]
     pub to: Account<'info, TokenAccount>,
-    /// CHECK: ok
-    #[account(address = token::ID)]
-    pub token_program: UncheckedAccount<'info>,
+    pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct DelegateUpdateAmount<'info> {
-    #[account(mut)]
+    #[account(mut, has_one = owner)]
     pub allowance: Account<'info, DelegateAllowance>,
     pub owner: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct DelegateClose<'info> {
-    #[account(mut, close = fee_recipient)]
+    #[account(mut, has_one = owner, close = fee_recipient)]
     pub allowance: Account<'info, DelegateAllowance>,
     pub owner: Signer<'info>,
     /// CHECK: ok
@@ -212,8 +174,10 @@ pub struct DelegateAllowance {
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Invalid account")]
-    InvalidAccount,
+    #[msg("Invalid Token Account")]
+    InvalidTokenAccount,
+    #[msg("Invalid token account owner")]
+    InvalidTokenAccountOwner,
     #[msg("Allowance exceeded")]
     AllowanceExceeded,
 }
